@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scoreboard</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+        font-family: "Arial", sans-serif;
+        /*background: black;*/
+      }
+
+      .scoreboard {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(22, 27, 27, 0.93);
+        padding: 40px 0;
+        width: 1050px;
+
+        border-radius: 3px;
+        min-width: 400px;
+      }
+
+      .header {
+        padding-left: 50px;
+        padding-bottom: 35px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 56px;
+        color: white;
+      }
+
+      .team-list-container {
+        padding: 0 50px;
+        color: white;
+      }
+
+      .team-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .team-item {
+        display: grid;
+        grid-template-columns: 1fr 56px;
+        gap: 20px;
+        font-size: 36px;
+        align-items: center;
+        font-weight: bold;
+        padding-bottom: 10px;
+
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .team-item:last-child {
+        border-bottom: none;
+      }
+
+      .points {
+        font-weight: bold;
+        background: #3299a8;
+        color: white;
+        font-size: 32px;
+        height: 56px;
+        width: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scoreboard">
+      <div class="header">
+        <h1>Pistetilanne</h1>
+      </div>
+      <div class="team-list-container">
+        <ul class="team-list" id="teamList">
+          <!-- Teams will be inserted here by JavaScript -->
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      async function fetchScores() {
+        try {
+          const response = await fetch(
+            "https://www.tilastopaja.info/api/pistetilanne"
+          );
+          const responseData = await response.json();
+          const data = responseData.data;
+
+          // Sort by rank and take top 5
+          const topTeams = data.sort((a, b) => a.rank - b.rank).slice(0, 5);
+
+          // Update the DOM
+          const teamList = document.getElementById("teamList");
+          teamList.innerHTML = topTeams
+            .map(
+              (team) => `
+          <li class="team-item">
+            <span class="club">${team.club}</span>
+            <span class="points">${team.points}</span>
+          </li>
+        `
+            )
+            .join("");
+        } catch (error) {
+          console.error("Error fetching scores:", error);
+        }
+      }
+
+      // Fetch immediately on load
+      fetchScores();
+
+      // Then fetch every 10 seconds
+      setInterval(fetchScores, 10000);
+    </script>
+  </body>
+</html>

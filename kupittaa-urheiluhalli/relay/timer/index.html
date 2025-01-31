@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stream Timer Overlay</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+        background: black;
+      }
+
+      #timer-container {
+        position: absolute;
+        bottom: 80px;
+        right: 100px;
+
+        height: 62px;
+        width: 205px;
+
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.9);
+        /* opacity: 0; */
+        transition: opacity 200ms ease-in-out;
+      }
+
+      #timer {
+        font-family: "Arial", sans-serif;
+        font-size: 36px;
+        font-weight: bold;
+        color: #333;
+        padding: 10px 20px;
+
+        width: 100%;
+        text-align: right;
+      }
+
+      #logo {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="timer-container">
+      <img id="logo" src="assets/ts.png" alt />
+      <div id="timer">0:00.0</div>
+    </div>
+
+    <script>
+      const timerContainer = document.getElementById("timer-container");
+      const timerElement = document.getElementById("timer");
+      let hideTimeout;
+
+      function showTimer() {
+        timerContainer.style.opacity = "1";
+        clearTimeout(hideTimeout);
+      }
+
+      function hideTimer() {
+        // timerContainer.style.opacity = "0";
+      }
+
+      function startHideTimer() {
+        hideTimeout = setTimeout(hideTimer, 5000);
+      }
+
+      // Connect to SSE endpoint
+      const evtSource = new EventSource("http://localhost:3000/events");
+      let lastUpdateTime = 0;
+
+      evtSource.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        if (data.latestTime) {
+          showTimer();
+          timerElement.textContent = data.latestTime;
+          lastUpdateTime = Date.now();
+          startHideTimer();
+        }
+      };
+
+      evtSource.onerror = function (err) {
+        console.error("SSE Error:", err);
+        hideTimer();
+      };
+    </script>
+  </body>
+</html>
