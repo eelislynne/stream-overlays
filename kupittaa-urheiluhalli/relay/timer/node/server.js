@@ -10,7 +10,7 @@ let latestTime = null; // Store the latest time data
 let sseClients = [];
 
 // Regular expression to extract the time in the format (e.g., 1:08.3 or 1:09.5)
-const timeRegex = /(?:\d+:)?\d{1,2}\.\d/;
+const timeRegex = /(?:\d+:)?\d{1,2}\.\d{1,2}/;
 
 // Create UDP socket
 const udpServer = dgram.createSocket("udp4");
