@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CrossFit Timer Overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+      }
+
+      #timer-container {
+        position: absolute;
+        bottom: 75px;
+        left: 245px;
+        height: 100px;
+        min-width: 150px;
+        width: auto;
+        display: flex;
+        align-items: center;
+        transition: opacity 200ms ease-in-out;
+      }
+
+      #timer-content {
+        width: 100%;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+      }
+
+      #timer {
+        font-family: "Oswald", sans-serif;
+        font-size: 60px;
+        color: white;
+        text-align: left;
+        white-space: nowrap;
+        flex: 1;
+      }
+
+      #bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="bg" alt="" />
+    <div id="timer-container">
+      <div id="timer-content">
+        <div id="timer">18:00</div>
+      </div>
+    </div>
+
+    <script>
+      const heats = [
+        "f_heat1.png",
+        "f_heat2.png",
+        "f_heat3.png",
+        "f_heat4.png",
+        "m_heat1.png",
+        "m_heat2.png",
+        "m_heat3.png",
+        "m_heat4.png",
+      ];
+      let heatIndex = 0;
+
+      const timerContainer = document.getElementById("timer-container");
+      const timerElement = document.getElementById("timer");
+      const bgElement = document.getElementById("bg");
+
+      let startTime = null;
+      let pausedElapsedTime = 0; // Track time when paused
+      let updateInterval = null;
+      let isRunning = false;
+      let waitingForNext = false;
+      const MAX_TIME_SECONDS = 18 * 60; // 18 minutes
+      const WAIT_TIME_SECONDS = 30; // 30 seconds
+
+      function setHeat(index) {
+        // Cycle through heats if index exceeds array length
+        const actualIndex = index % heats.length;
+        bgElement.src = `assets/${heats[actualIndex]}`;
+      }
+
+      function formatTime(seconds) {
+        if (seconds < 0) return "0:00";
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+      }
+
+      function showTimer() {
+        timerContainer.style.opacity = "1";
+      }
+
+      function updateTimerDisplay() {
+        if (!isRunning || !startTime) return;
+
+        const currentRunElapsed = Math.floor((Date.now() - startTime) / 1000);
+        const totalElapsedSeconds = pausedElapsedTime + currentRunElapsed;
+
+        if (totalElapsedSeconds >= MAX_TIME_SECONDS) {
+          // Timer reached 18:00
+          timerElement.textContent = formatTime(MAX_TIME_SECONDS);
+          stopTimer();
+          startWaitPeriod();
+        } else {
+          timerElement.textContent = formatTime(totalElapsedSeconds);
+        }
+      }
+
+      function startTimer() {
+        if (isRunning || waitingForNext) return;
+
+        isRunning = true;
+        startTime = Date.now();
+        showTimer();
+
+        updateInterval = setInterval(updateTimerDisplay, 100);
+      }
+
+      function stopTimer() {
+        if (isRunning && startTime) {
+          // Save the elapsed time when stopping
+          const currentRunElapsed = Math.floor((Date.now() - startTime) / 1000);
+          pausedElapsedTime += currentRunElapsed;
+        }
+        isRunning = false;
+        clearInterval(updateInterval);
+        updateInterval = null;
+        startTime = null;
+      }
+
+      function resetTimer() {
+        stopTimer();
+        pausedElapsedTime = 0;
+        timerElement.textContent = "0:00";
+        startTime = null;
+      }
+
+      function startWaitPeriod() {
+        waitingForNext = true;
+
+        setTimeout(() => {
+          // Reset timer and move to next heat
+          resetTimer();
+          heatIndex++;
+          setHeat(heatIndex);
+          waitingForNext = false;
+        }, WAIT_TIME_SECONDS * 1000);
+      }
+
+      function handleBgClick() {
+        if (waitingForNext) return;
+
+        if (isRunning) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+      }
+
+      function handleBgDblClick() {
+        console.log("dblclick");
+        resetTimer();
+        heatIndex++;
+        setHeat(heatIndex);
+      }
+
+      // Initialize
+      setHeat(heatIndex);
+      resetTimer();
+
+      // Add click event listener to bg element
+      bgElement.addEventListener("click", handleBgClick);
+      bgElement.addEventListener("dblclick", handleBgDblClick);
+      bgElement.style.cursor = "pointer";
+    </script>
+  </body>
+</html>
